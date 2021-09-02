@@ -4,7 +4,6 @@
  *
  * 功能介绍
  * @author   hexu
- * @date 2021/6/10 12:13 上午
  */
 
 namespace Guest\EasyCom;
@@ -19,6 +18,13 @@ class Config
     public static $instance;
 
     public static $configPath;
+
+    // 基础配置路径
+    public static $baseConfigPath;
+
+    // 扩展配置路径会覆盖基础配置
+    public static $extendConfigPath;
+
     /**
      * 配置参数
      * @var array
@@ -43,6 +49,9 @@ class Config
         {
             self::$instance = new self();
             self::$instance->loader();
+            if(self::$extendConfigPath){
+                self::$instance->loaderExtend();
+            }
         }
         return self::$instance;
     }
@@ -50,19 +59,47 @@ class Config
     /**
      * @title 加载配置
      * @author hexu
-     * @date 2021/6/10 11:38 上午
      */
     public function loader(){
-        if(empty(self::$configPath)){
+        if(empty(self::$baseConfigPath)){
             $configPath = __DIR__."/config/";
         }else{
-            $configPath = self::$configPath;
+            $configPath = self::$baseConfigPath;
         }
+        $configPath = $this->fullPath($configPath);
         $files = glob($configPath . '*' . $this->configExt);
         foreach ($files as $file) {
             $this->load($file, pathinfo($file, PATHINFO_FILENAME));
         }
     }
+
+    /**
+     * @title 加载扩展配置
+     * @author hexu
+     */
+    public function loaderExtend(){
+        $configPath = self::$extendConfigPath;
+        $configPath = $this->fullPath($configPath);
+        $files = glob($configPath . '*' . $this->configExt);
+        foreach ($files as $file) {
+            $this->load($file, pathinfo($file, PATHINFO_FILENAME));
+        }
+    }
+
+    /**
+     * @title 获取完整的路径
+     * @param $path
+     * @return mixed|string
+     * @author hexu
+     */
+    public function fullPath($path): string
+    {
+        if(substr($path, 0, 1) != '/'){
+            $path = $path . '/';
+        }
+        return $path;
+    }
+
     /**
      * 解析配置文件
      * @access public
@@ -201,6 +238,19 @@ class Config
         }
 
         return $result;
+    }
+
+    /**
+     * @title 反向获取值的键值
+     * @param string|null $name
+     * @param $value
+     * @return false|int|string
+     * @author hexu
+     */
+    public function getValueKey(string $name = null, $value){
+        $res = $this->get($name);
+        if(empty($res))return false;
+        return array_search($value,$res);
     }
 
 }

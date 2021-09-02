@@ -30,12 +30,11 @@ class EasyDb extends PDO{
     /**
      * @title 静态初始化
      * @author hexu
-     * @date 2021/7/18 10:21 上午
      */
     public static function init(){
         if(!self::$instance instanceof self)
         {
-            $config = \Guest\EasyFrom\Config::Init()->get('Config.database.mysql');
+            $config = \Guest\EasyCom\Config::Init()->get('Config.database.mysql');
             self::$instance = new self($config);
         }
         return self::$instance;
@@ -46,7 +45,7 @@ class EasyDb extends PDO{
      * 初始化
      * @param array $config mysql数据库连接信息
      */
-    public function __construct($config = array()){
+    private function __construct($config = array()){
         $this->db_config = $config;
         try {
             $dsn = 'mysql:host='.$this->db_config['host'].';port='.$this->db_config['port'].';dbname='.$this->db_config['dbname'];
@@ -61,12 +60,15 @@ class EasyDb extends PDO{
         }
     }
 
+    //克隆方法私有化，防止复制实例
+    private function __clone(){}
+
     /**
      * 执行一条SQL语句，适用于比较复杂的SQL语句
      * 如果是增删改查的语句，建议使用下面进一步封装的语句
      * @param string $sql
      * @param array $data
-     * @return obj 执行后的结果对象
+     * @return false|\PDOStatement
      */
     public function queryObj($sql, $data = array()){
         $this->lastsql = $sql;
@@ -384,7 +386,6 @@ class EasyDb extends PDO{
      * @param $sql
      * @return mixed
      * @author hexu
-     * @date 2021/7/18 4:15 下午
      */
     public function execSql($sql): bool
     {
@@ -396,7 +397,6 @@ class EasyDb extends PDO{
      * @title 获取最后插入的ID
      * @return false|\PDOStatement
      * @author hexu
-     * @date 2021/6/15 11:50 下午
      */
     public function getLastId(){
         $stmt = $this->query("SELECT LAST_INSERT_ID()");
@@ -407,11 +407,12 @@ class EasyDb extends PDO{
     /**
      * @title 查找通过ID
      * @param $id
+     * @param $tableName
+     * @return mixed
      * @author hexu
-     * @date 2021/7/12 5:15 下午
      */
-    public function findByID($id){
-        $result = $this->queryOne("select * from {$this->tableName} where id = :id",
+    public function findByID($id, $tableName){
+        $result = $this->queryOne("select * from {$tableName} where id = :id",
             ['id'=>$id]);
         return $result;
     }
